@@ -1,0 +1,54 @@
+# EXAMPLE: windows
+#
+# DESCRIPTION
+# This example is written for the native Windows port: commands are evaluated
+# by cmd.exe and therefore use cmd syntax. Taskopen's variables may be
+# referenced as $VAR (taskopen translates them to %VAR%) or as %VAR% directly.
+# The helper scripts are provided as .cmd variants in scripts/ (editnote.cmd,
+# addnote.cmd, rawedit.cmd); add that directory to path_ext if it is not on
+# your PATH already.
+#
+# SETUP
+# Copy all but the General section to your config file.
+# Alternatively, you can test this configuration with a temporary data base,
+# by calling
+#   set TASKOPENRC=C:\path\to\examples\windows
+#   set TASKRC=%TEMP%\tasktest\taskrc
+#   taskopen ...
+# In order to operate on the temporary data base with taskwarrior, you may
+# define an alias like:
+#   doskey tx=task rc.data.location=%TEMP%\tasktest $*
+
+[General]
+# remove if used productively
+taskargs = "rc.data.location=%TEMP%\\tasktest"
+
+# adapt this to your installation path if the helper scripts are not on PATH
+#path_ext=C:\\path\\to\\taskopen\\scripts
+
+[Actions]
+
+notes.regex = "^Notes\\.(.*)"
+notes.command = "editnote \"%USERPROFILE%\\Notes\\tasknotes\\$UUID.$LAST_MATCH\" \"$TASK_DESCRIPTION\" $UUID"
+
+files.regex = "^(?:[A-Za-z]:)?[\\\\/\\.\\~].*\\.(.*)"
+files.command = "start \"\" \"$FILE\""
+files.filtercommand = "if exist \"$FILE\" (exit 0) else (exit 1)"
+
+url.regex = "((?:www|http).*)"
+url.command = "start \"\" \"$LAST_MATCH\""
+
+edit.regex = ".*"
+edit.command = "rawedit $UUID \"$ANNOTATION\""
+delete.regex = ".*"
+delete.command = "task $UUID denotate -- \"$ANNOTATION\""
+
+[CLI]
+default = default
+alias.default = "normal --exclude=edit,delete"
+
+alias.files  = "normal --include=files"
+alias.notes  = "normal --include=notes"
+alias.edit   = "normal --include=edit"
+alias.delete = "normal --include=delete"
+alias.raw    = "any --include=delete,edit"

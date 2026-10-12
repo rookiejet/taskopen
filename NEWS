@@ -1,6 +1,13 @@
+New features in taskopen 2.0.4
+
+  - Add native Windows support: commands are evaluated by cmd.exe and the
+    helper scripts are available as .cmd variants.
+
 Bugfixes in taskopen 2.0.4
 
   - Removed dependency to libpcre by using nim-regex instead
+  - Fix crash when printing empty values (e.g. in diagnostics).
+  - Fix assertion failure when parsing taskwarrior's JSON output.
   
 New features in taskopen 2.0.3
 

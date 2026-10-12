@@ -9,6 +9,7 @@ import osproc
 import strutils
 import regex
 import json
+import streams
 import ./output
 
 const default_args = ["rc.verbose=blank,label,edit", "rc.json.array=on", "rc.gc=off"]
@@ -42,6 +43,8 @@ proc json*(taskbin: string, taskargs: openArray[string], filter: openArray[strin
 
   debug.log("Executing: ", taskbin, " ", args.join(" "))
   var p = startProcess(taskbin, args=args, options = {poUsePath})
-  result = parseJson(outputStream(p))
+  # note: parseJson(stream) closes the stream, hence read the output first
+  #       to keep p.close() from closing an already closed handle
+  result = parseJson(outputStream(p).readAll())
   p.close()
 

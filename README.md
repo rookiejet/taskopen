@@ -12,7 +12,11 @@ This tool is an enhancement to taskwarrior, i.e. it depends on the task binary. 
 
 Taskopen is implemented in nim (requires at least version 1.4). Taskopen also requires make, xdg-open, and when run on the Windows Subsystem for Linux, wslu.
 
-The helper scripts are usually run by bash. Some of the scripts also depend on (g)awk.
+On native Windows, neither make nor xdg-open are required (see [Windows (native)]); commands are evaluated by cmd.exe instead of a POSIX shell.
+
+The helper scripts are usually run by bash. Some of the scripts also depend on (g)awk. On native Windows, the helper scripts exist as `.cmd` variants that are run by cmd.exe.
+
+[Windows (native)]: #windows-native
 
 # What does it do?
 
@@ -115,7 +119,7 @@ sudo make PREFIX=/usr/local install
 This will install the taskopen binary into the `PREFIX/bin` directory.
 For packaging, you can add `DESTDIR=/path/to/dir/` to the install command.
 
-By default, taskopen will recognise any filenames in annotations and open them with `xdg-open` or `open` (on OS X).
+By default, taskopen will recognise any filenames in annotations and open them with `xdg-open` or `open` (on OS X) or `start` (on Windows).
 Further actions must be specified in a configuration file at `~/.config/taskopen/taskopenrc` or `~/.taskopenrc`.
 
 A default configuration file can be created with `taskopen --config ~/.config/taskopen/taskopenrc`.
@@ -134,6 +138,41 @@ cd taskopen
 make PREFIX=/usr
 sudo make PREFIX=/usr install
 ```
+
+### Windows (native)
+
+Taskopen can also be built and run natively on Windows. You need:
+
+* [Taskwarrior](https://taskwarrior.org/) for Windows (`task.exe` on your `PATH`)
+* [Nim](https://nim-lang.org/) (at least version 1.4)
+
+From a command prompt, run:
+
+```
+git clone https://codeberg.org/jschlatow/taskopen.git
+cd taskopen
+nimble setup
+nim c -d:release --outdir:. src\taskopen.nim
+```
+
+This creates `taskopen.exe` in the project directory; copy it to a directory
+of your choice (the Makefile is POSIX-only and not required).
+
+On Windows, taskopen evaluates all commands with `cmd.exe`, so commands in the
+config file use cmd syntax. Taskopen's variables can be referenced as `$VAR`
+(taskopen translates them to `%VAR%` before handing the command to cmd.exe) or
+directly as `%VAR%`. The helper scripts are provided as `.cmd` variants in
+[scripts]; add that directory to the `path_ext` option of your config file if
+it is not on your `PATH`. See [examples/windows] for a config file written for
+cmd.exe.
+
+Note that the examples and helper scripts that rely on POSIX shells (e.g.
+[taskban], [vims] and [attach]) are not available on native Windows.
+
+[examples/windows]: ./examples/windows
+[taskban]: ./scripts/taskban
+[vims]: ./scripts/vims
+[attach]: ./scripts/attach
 
 ## With nimble
 
@@ -158,6 +197,10 @@ Taskopen tries to find a configuration file at the following locations:
 * `$XDG_CONFIG_HOME/taskopen/taskopenrc` if `$XDG_CONFIG_HOME` is set
 * `~/.config/taskopen/taskopenrc`
 * `~/.taskopenrc`.
+
+On Windows, this translates to `%USERPROFILE%\.taskopenrc` and
+`%APPDATA%\taskopen\taskopenrc` (in this order of precedence after
+`%TASKOPENRC%`).
 
 Please also take a look at the manpage [taskopenrc(5)] for the config file syntax.
 
@@ -254,6 +297,7 @@ Taskopen comes with a bunch of [scripts] that serve as examples to perform more 
 Most notably are [addnote] and [editnote].
 The former is used by default as the NO_ANNOTATION_HOOK and annotates the task with the given ID with 'Notes'.
 The latter can be used to automatically add a header to new notes files.
+On native Windows, these scripts are also available as `.cmd` variants (`addnote.cmd`, `editnote.cmd`, `rawedit.cmd`, `archive.cmd`, `xdg-open-cli.cmd`) that are run by cmd.exe.
 Please have a look at the scripts or `man taskopen` to find more documentation.
 
 [scripts]: ./scripts

@@ -15,9 +15,26 @@ import ./types
 import ./output
 
 # compile time defaults depending on target system
-const EDITOR   {.strdefine.}: string = "vim"
-const OPEN     {.strdefine.}: string = "xdg-open"
-const PATH_EXT {.strdefine.}: string = ""
+when defined(windows):
+  const EDITOR   {.strdefine.}: string = "notepad"
+  const OPEN     {.strdefine.}: string = "start \"\""
+  const PATH_EXT {.strdefine.}: string = ""
+
+  # commands must be written for the shell that evaluates them: cmd.exe on
+  # Windows (see ./exec), /bin/sh elsewhere. Taskopen's own variables are
+  # referenced as $VAR on all platforms as taskopen translates them to %VAR%
+  # before handing the command over to cmd.exe.
+  const OPEN_FILE = OPEN & " \"$FILE\""
+  const OPEN_URL  = OPEN & " \"$LAST_MATCH\""
+  const EDIT_NOTE = "editnote \"%USERPROFILE%\\Notes\\tasknotes\\$UUID$LAST_MATCH\" \"$TASK_DESCRIPTION\" $UUID"
+else:
+  const EDITOR   {.strdefine.}: string = "vim"
+  const OPEN     {.strdefine.}: string = "xdg-open"
+  const PATH_EXT {.strdefine.}: string = ""
+
+  const OPEN_FILE = OPEN & " $FILE"
+  const OPEN_URL  = OPEN & " $LAST_MATCH"
+  const EDIT_NOTE = "editnote ~/Notes/tasknotes/$UUID$LAST_MATCH \"$TASK_DESCRIPTION\" $UUID"
 
 type
   Settings* = object
@@ -212,21 +229,21 @@ proc parseConfig*(filepath: string): Settings =
     labelregex: ".*",
     regex: "^[\\.\\/~]+.*\\.(.*)",
     modes: @["batch", "any", "normal"],
-    command: OPEN & " $FILE")
+    command: OPEN_FILE)
   result.validActions["notes"] = Action(
     name: "notes",
     target: "annotations",
     labelregex: ".*",
     regex: "^Notes(\\..*)?",
     modes: @["batch", "any", "normal"],
-    command: "editnote ~/Notes/tasknotes/$UUID$LAST_MATCH \"$TASK_DESCRIPTION\" $UUID")
+    command: EDIT_NOTE)
   result.validActions["url"] = Action(
     name: "url",
     target: "annotations",
     labelregex: ".*",
     regex: "((?:www|http).*)",
     modes: @["batch", "any", "normal"],
-    command: OPEN & " $LAST_MATCH")
+    command: OPEN_URL)
 
   result.editor = EDITOR
   result.pathExt = PATH_EXT

@@ -29,7 +29,17 @@ proc build_env(s: Settings,
     result[k] = v
 
   if s.pathExt != "":
-    result["PATH"] = s.pathExt & ":" & getEnv("PATH")
+    when defined(windows):
+      # environment variables are case-insensitive on Windows: reuse the
+      # key that PATH is stored under instead of adding a second one
+      var pathKey = "PATH"
+      for k in result.keys():
+        if cmpIgnoreCase(k, "PATH") == 0:
+          pathKey = k
+          break
+      result[pathKey] = s.pathExt & ";" & result.getOrDefault(pathKey)
+    else:
+      result["PATH"] = s.pathExt & ":" & getEnv("PATH")
 
   if s.editor != "":
     result["EDITOR"] = s.editor

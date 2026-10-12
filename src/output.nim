@@ -178,7 +178,10 @@ proc menu*(items: openArray[Actionable]): seq[int] =
     else:
       error.log(ids, " is not a number or a range")
 
-proc splitColumn(s: string, w: Positive): seq[string] =
+proc splitColumn(s: string, w: Natural): seq[string] =
+  if w == 0:
+    return @[s]
+
   let length = runeLen(s)
 
   var i = 0
