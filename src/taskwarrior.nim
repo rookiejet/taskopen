@@ -44,7 +44,19 @@ proc json*(taskbin: string, taskargs: openArray[string], filter: openArray[strin
   debug.log("Executing: ", taskbin, " ", args.join(" "))
   var p = startProcess(taskbin, args=args, options = {poUsePath})
   # note: parseJson(stream) closes the stream, hence read the output first
-  #       to keep p.close() from closing an already closed handle
-  result = parseJson(outputStream(p).readAll())
+  #       to keep p.close() from closing an already closed handle.
+  #       readAll() stops on a short read and truncates the output when the
+  #       pipe drains faster than the child writes (seen on Windows), so
+  #       drain the pipe in a loop until end of file instead.
+  var output = ""
+  var buf: array[4096, char]
+  while true:
+    let n = outputStream(p).readData(buf[0].addr, buf.len)
+    if n <= 0:
+      break
+    var s = newString(n)
+    copyMem(addr s[0], addr buf[0], n)
+    output.add s
+  result = parseJson(output)
   p.close()
 
